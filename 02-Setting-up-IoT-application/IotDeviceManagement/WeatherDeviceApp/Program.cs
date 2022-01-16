@@ -1,11 +1,11 @@
 ﻿using CommonDeviceComponents;
 using Microsoft.AspNetCore.SignalR.Client;
 
-var keepRunning = true;
+var cts = new CancellationTokenSource();
 
 Console.CancelKeyPress += new ConsoleCancelEventHandler((s, a) => {
     a.Cancel = true;
-    keepRunning = false;
+    cts.Cancel();
 });
 
 var serialNumber = args[0];
@@ -15,9 +15,9 @@ var clientWrapper = new SignalRClientWrapper(serialNumber, DeviceType.WeatherSen
 var hubConnection = clientWrapper.GetHubConnection();
 hubConnection.On("RequestMetricUpdate", async () => await SendMetrics());
 
-await hubConnection.StartAsync();
+await clientWrapper.ConnectDevice();
 
-while (keepRunning)
+while (!cts.IsCancellationRequested)
 {
     await SendMetrics();
     await Task.Delay(TimeSpan.FromMinutes(1));
@@ -36,7 +36,7 @@ async Task SendMetrics()
     };
 
     if (hubConnection != null)
-        await hubConnection.SendAsync("UpdateDiagnostics", diagnostics);
+        await hubConnection.SendAsync("UpdateMetrics", diagnostics);
 }
 
 Console.ReadKey();

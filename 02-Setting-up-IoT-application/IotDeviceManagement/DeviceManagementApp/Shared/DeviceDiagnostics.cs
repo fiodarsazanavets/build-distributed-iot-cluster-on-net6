@@ -6,5 +6,4 @@ public class DeviceDiagnostics
     public double DiskUsage { get; set; }
     public double MemoryUsage { get; set; }
     public float FirmwareVersion { get; set; }
-    public bool UpdatingFirmware { get; set; }
 }

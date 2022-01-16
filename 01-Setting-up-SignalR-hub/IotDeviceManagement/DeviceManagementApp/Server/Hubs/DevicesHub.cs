@@ -4,11 +4,13 @@ namespace DeviceManagementApp.Server.Hubs;
 
 public class DevicesHub : Hub
 {
+    private const string ManagersGroup = "Managers";
+
     public async Task ConnectDevice(string serialNumber, DeviceType deviceType)
     {
         Console.WriteLine($"Device connected. Serial number: {serialNumber}. Device type: {deviceType}.");
 
-        await Clients.Group("Managers")
+        await Clients.Group(ManagersGroup)
             .SendAsync("SetDeviceConnected", Context.ConnectionId, serialNumber, deviceType);
     }
 
@@ -16,7 +18,7 @@ public class DevicesHub : Hub
     {
         Console.WriteLine($"Metrics received from client {Context.ConnectionId}.");
 
-        await Clients.Group("Managers")
+        await Clients.Group(ManagersGroup)
             .SendAsync("UpdateMetrics", Context.ConnectionId, metrics);
     }
 
@@ -24,7 +26,7 @@ public class DevicesHub : Hub
     {
         Console.WriteLine($"Diagnostics received from client {Context.ConnectionId}.");
 
-        await Clients.Group("Managers")
+        await Clients.Group(ManagersGroup)
             .SendAsync("UpdateDiagnostics", Context.ConnectionId, diagnostics);
     }
 
@@ -37,7 +39,7 @@ public class DevicesHub : Hub
         {
             cancellationToken.ThrowIfCancellationRequested();
             yield return i;
-            await Clients.Group("Managers")
+            await Clients.Group(ManagersGroup)
                 .SendAsync("NotifyFirmwareUpdate", Context.ConnectionId, i, cancellationToken: cancellationToken);
             await Task.Delay(10, cancellationToken);
         }
@@ -68,14 +70,14 @@ public class DevicesHub : Hub
 
     public async Task AddClientToManagersGroup()
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, "Mangers");
+        await Groups.AddToGroupAsync(Context.ConnectionId, ManagersGroup);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         Console.WriteLine($"Client {Context.ConnectionId} disconnected.");
 
-        await Clients.Group("Managers").SendAsync("SetDeviceDisconnected", Context.ConnectionId);
+        await Clients.Group(ManagersGroup).SendAsync("SetDeviceDisconnected", Context.ConnectionId);
         await base.OnDisconnectedAsync(exception);
     }
 }

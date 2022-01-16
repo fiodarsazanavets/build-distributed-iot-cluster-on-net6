@@ -1,6 +1,8 @@
-using DeviceManagementApp.Client;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+global using DeviceManagementApp.Client;
+global using DeviceManagementApp.Client.Models;
+global using DeviceManagementApp.Shared;
+global using Microsoft.AspNetCore.Components.Web;
+global using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");

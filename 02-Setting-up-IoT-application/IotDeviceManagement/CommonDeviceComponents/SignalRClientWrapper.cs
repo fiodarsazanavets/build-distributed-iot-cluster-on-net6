@@ -34,6 +34,7 @@ public class SignalRClientWrapper : ISignalRClientWrapper, IAsyncDisposable
         hubConnection.On("RequestDiagnostics", async () => await SendDiagnostics());
         hubConnection.On("RequestFirmwareUpdate", async () => await UpdateFirmware());
         hubConnection.On<float>("UpdateFirmwareVersion", (newVersion) => firmwareVersion = newVersion);
+        hubConnection.On("Reboot", async () => await RestartConnection());
     }
 
     public HubConnection GetHubConnection()
@@ -43,6 +44,7 @@ public class SignalRClientWrapper : ISignalRClientWrapper, IAsyncDisposable
 
     public async Task ConnectDevice()
     {
+        await hubConnection.StartAsync();
         await hubConnection.SendAsync("ConnectDevice", serialNumber, deviceType);
     }
 
@@ -55,8 +57,7 @@ public class SignalRClientWrapper : ISignalRClientWrapper, IAsyncDisposable
             CpuUsage = rand.NextDouble() * 100,
             MemoryUsage = rand.NextDouble() * 100,
             DiskUsage = rand.NextDouble() * 100,
-            FirmwareVersion = firmwareVersion,
-            UpdatingFirmware = updatingFirmware
+            FirmwareVersion = firmwareVersion
         };
 
         await hubConnection.SendAsync("UpdateDiagnostics", diagnostics);
@@ -89,6 +90,12 @@ public class SignalRClientWrapper : ISignalRClientWrapper, IAsyncDisposable
         }
 
         updatingFirmware = false;
+    }
+
+    private async Task RestartConnection()
+    {
+        await hubConnection.StopAsync();
+        await ConnectDevice();
     }
 }
 
