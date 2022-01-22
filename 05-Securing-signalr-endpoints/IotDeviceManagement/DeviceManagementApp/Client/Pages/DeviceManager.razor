@@ -1,0 +1,249 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.AspNetCore.SignalR.Client
+@inject IAccessTokenProvider TokenProvider
+@inject NavigationManager NavigationManager
+@implements IAsyncDisposable
+
+<PageTitle>Connected Devices</PageTitle>
+
+<div class="row">
+    <div class="col-12">
+        <hr />
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div id="deviceList">
+            <div class="row">
+                <div class="col-sm">
+                    <b>Serial Number</b>
+                </div>
+                <div class="col-sm">
+                    <b>Type</b>
+                </div>
+                <div class="col-sm">
+                    <b>Diagnostics</b>
+                </div>
+                <div class="col-sm">
+                    <b>Data</b>
+                </div>
+                <div class="col-sm">
+                    <b>Actions</b>
+                </div>
+            </div>
+
+            @foreach (var item in devices)
+            {
+                <div class="row">
+                    <div class="col-sm">
+                        @item.Value.SerialNumber
+                    </div>
+                    <div class="col-sm">
+                        @item.Value.DeviceType.ToString()
+                    </div>
+                    <div class="col-sm">
+                        Firmware Version: @item.Value.Diagnostics.FirmwareVersion<br/>
+                        CPU Usage: @Math.Round(@item.Value.Diagnostics.CpuUsage, 2)<br/>
+                        Memory Usage: @Math.Round(@item.Value.Diagnostics.MemoryUsage, 2)<br/>
+                        Disk Usage: @Math.Round(@item.Value.Diagnostics.DiskUsage, 2)
+                    </div>
+                    <div class="col-sm">
+                        @if (item.Value is WeatherDevice weatherDevice)
+                        {
+                            <div>
+                                Air Pressure: @Math.Round(@weatherDevice.WeatherMetrics.Pressure, 2) hPa<br/>
+                                Temperature: @Math.Round(@weatherDevice.WeatherMetrics.Temperature, 2) F<br/>
+                                Humidity: @Math.Round(@weatherDevice.WeatherMetrics.Humidity, 2)%
+                            </div>
+                        }
+                        else if (item.Value is AudioDevice audioDevice)
+                        {
+                            <div>
+                                Area: @audioDevice.Area<br/>
+                                Location: @audioDevice.Location<br/>
+                                @(audioDevice.PlayingAudio ? "Playing Audio": "Not Playing")
+                            </div>
+                        }
+                    </div>
+                    <div class="col-sm">
+                        @if (item.Value.DeviceType == DeviceType.WeatherSensor)
+                        {
+                            <button @onclick="() => RequestMetricUpdate(item.Key)" >Get Weather Metrics</button>
+                        }
+                        else if (item.Value.DeviceType == DeviceType.AudioPlayer)
+                        {
+                            <button @onclick="() => TriggerAudioPlayback(item.Key)" >Play Audio</button>
+                        }
+                        <button @onclick="() => RebootDevice(item.Key)" >Reboot</button>
+                        <button @onclick="() => RequestDiagnostics(item.Key)" >Get Diagnostics</button>
+
+                        @if (item.Value.FirmwareUpdating)
+                        {
+                            <div>
+                                Firmware update progress: @item.Value.FirmwareUpdateProgress%
+                            </div>
+                        }
+                        else
+                        {
+                            <button @onclick="() => RequestFirmwareUpdate(item.Key)" >Update Firmware</button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private HubConnection? hubConnection;
+    private readonly Dictionary<string, Device> devices = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accessTokenResult = await TokenProvider.RequestAccessToken();
+        string? accessToken = null;
+
+        if (accessTokenResult.TryGetToken(out var token))
+        {
+            accessToken = token.Value;
+        }
+
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/devices"), options => {
+                options.AccessTokenProvider = () => Task.FromResult(accessToken);
+            })
+            .Build();
+
+        hubConnection.On<string, string, DeviceType>("SetDeviceConnected", (c, s, d) => AddConnectedDevice(c, s, d));
+        hubConnection.On<string>("SetDeviceDisconnected", (c) => SetDeviceDisconected(c));
+        hubConnection.On<string, SensorMetrics>("UpdateMetrics", (c, m) => UpdateSensorMetrics(c, m));
+        hubConnection.On<string, DeviceDiagnostics>("UpdateDiagnostics", (c, d) => UpdateDiagnostics(c, d));
+        hubConnection.On<string, int>("NotifyFirmwareUpdate", (c, f) => SetFirmwareUpdating(c, f));
+        hubConnection.On<string, bool>("UpdatePlaybackStatus", (c, p) => UpdatePlaybackStatus(c, p));
+        hubConnection.On<string, string, string>("RegisterAudioPlayer", (c, a, l) => RegisterAudioPlayer(c, a, l));
+
+        await hubConnection.StartAsync();
+        await hubConnection.SendAsync("AddClientToManagersGroup");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection != null)
+            await hubConnection.DisposeAsync();
+    }
+
+    private void AddConnectedDevice(string connectionId, string serialNumber, DeviceType deviceType)
+    {
+        switch (deviceType)
+        {
+            case DeviceType.WeatherSensor:
+                devices[connectionId] = new WeatherDevice(serialNumber, deviceType);
+                break;
+            case DeviceType.AudioPlayer:
+                devices[connectionId] = new AudioDevice(serialNumber, deviceType);
+                break;
+        }
+
+        StateHasChanged();
+    }
+
+    private void SetDeviceDisconected(string connectionId)
+    {
+        if (devices.ContainsKey(connectionId))
+        {
+            devices.Remove(connectionId);
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateSensorMetrics(string connectionId, SensorMetrics metrics)
+    {
+        if (devices.ContainsKey(connectionId) && 
+            devices[connectionId] is WeatherDevice weatherDevice)
+        {
+            weatherDevice.WeatherMetrics = metrics;
+            StateHasChanged();
+        }   
+    }
+
+    private void UpdateDiagnostics(string connectionId, DeviceDiagnostics diagnostics)
+    {
+        if (devices.ContainsKey(connectionId))
+        {
+            devices[connectionId].Diagnostics = diagnostics;
+            StateHasChanged();
+        }
+    }
+
+    private void SetFirmwareUpdating(string connectionId, int firmwareUpdateProgress)
+    {
+        if (devices.ContainsKey(connectionId))
+        {
+            if (firmwareUpdateProgress < 100)
+            {
+                devices[connectionId].FirmwareUpdating = true;
+                devices[connectionId].FirmwareUpdateProgress = firmwareUpdateProgress; 
+            }
+            else
+            {
+                devices[connectionId].FirmwareUpdating = false;
+                devices[connectionId].FirmwareUpdateProgress = 0; 
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    private void RegisterAudioPlayer(string connectionId, string area, string location)
+    {
+        if (devices.ContainsKey(connectionId) && 
+            devices[connectionId] is AudioDevice audioDevice)
+        {
+            audioDevice.Area = area;
+            audioDevice.Location = location;
+            StateHasChanged();
+        }  
+    }
+
+    private void UpdatePlaybackStatus(string connectionId, bool playing)
+    {
+        if (devices.ContainsKey(connectionId) && 
+            devices[connectionId] is AudioDevice audioDevice)
+        {
+            audioDevice.PlayingAudio = playing;
+            StateHasChanged();
+        }  
+    }
+
+    private async Task RequestMetricUpdate(string connectionId)
+    {
+        if (hubConnection != null)
+            await hubConnection.SendAsync("RequestMetricUpdate", connectionId);
+    }
+
+    private async Task RequestDiagnostics(string connectionId)
+    {
+        if (hubConnection != null)
+            await hubConnection.SendAsync("RequestDiagnostics", connectionId);
+    }
+
+    private async Task RequestFirmwareUpdate(string connectionId)
+    {
+        if (hubConnection != null)
+            await hubConnection.SendAsync("RequestFirmwareUpdate", connectionId);
+    }
+
+    private async Task RebootDevice(string connectionId)
+    {
+        if (hubConnection != null)
+            await hubConnection.SendAsync("RebootDevice", connectionId);
+    }
+
+    private async Task TriggerAudioPlayback(string connectionId)
+    {
+        if (hubConnection != null)
+            await hubConnection.SendAsync("TriggerAudioPlayback", connectionId);
+    }
+}
