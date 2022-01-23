@@ -15,14 +15,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommonDeviceComponents", "C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AudioPlayerApp", "AudioPlayerApp\AudioPlayerApp.csproj", "{1AFEB837-6CDE-41A1-80B5-5F0A4DD337C9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorApp1.Server", "BlazorApp1\Server\BlazorApp1.Server.csproj", "{38A25E17-53CF-4AF4-8697-C9997664E2B8}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorApp1.Client", "BlazorApp1\Client\BlazorApp1.Client.csproj", "{0F6CA59A-6B49-46A6-93C4-11A437C6F0BC}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorApp1.Shared", "BlazorApp1\Shared\BlazorApp1.Shared.csproj", "{4E2EEF7A-A636-4F19-A21A-9CA1237F09CF}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorApp2", "BlazorApp2\BlazorApp2.csproj", "{D25FF40A-86A3-4192-9C4E-4299809B9744}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,22 +45,6 @@ Global
 		{1AFEB837-6CDE-41A1-80B5-5F0A4DD337C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1AFEB837-6CDE-41A1-80B5-5F0A4DD337C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1AFEB837-6CDE-41A1-80B5-5F0A4DD337C9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{38A25E17-53CF-4AF4-8697-C9997664E2B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{38A25E17-53CF-4AF4-8697-C9997664E2B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{38A25E17-53CF-4AF4-8697-C9997664E2B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{38A25E17-53CF-4AF4-8697-C9997664E2B8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0F6CA59A-6B49-46A6-93C4-11A437C6F0BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0F6CA59A-6B49-46A6-93C4-11A437C6F0BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0F6CA59A-6B49-46A6-93C4-11A437C6F0BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0F6CA59A-6B49-46A6-93C4-11A437C6F0BC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4E2EEF7A-A636-4F19-A21A-9CA1237F09CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4E2EEF7A-A636-4F19-A21A-9CA1237F09CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4E2EEF7A-A636-4F19-A21A-9CA1237F09CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4E2EEF7A-A636-4F19-A21A-9CA1237F09CF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D25FF40A-86A3-4192-9C4E-4299809B9744}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D25FF40A-86A3-4192-9C4E-4299809B9744}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D25FF40A-86A3-4192-9C4E-4299809B9744}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D25FF40A-86A3-4192-9C4E-4299809B9744}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
