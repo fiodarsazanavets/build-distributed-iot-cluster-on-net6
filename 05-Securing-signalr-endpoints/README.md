@@ -1,3 +1,3 @@
-# Add a background scheduler to the device management application
+# Securing SignalR endpoints
 
-In this solution sample, we add a background server-side scheduler that sends commands to SignalR clients.
+In this solution sample, we are securing IoT device applications via client certificates. We are also securing device management web view via OpenId Connect.
